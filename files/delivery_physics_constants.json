@@ -1,0 +1,34 @@
+{
+  "$schema": "delivery_physics_constants.json",
+  "description": "Base tunable physics constants for ball flight, swing, spin, and collision. Pitch/ground modifiers multiply against these. Values below are starting placeholders for prototyping (Milestone 1), not final-tuned.",
+  "ball": {
+    "mass_kg": 0.163,
+    "radius_m": 0.036,
+    "drag_coefficient_base": 0.47,
+    "seam_position_effect_coefficient": 0.25,
+    "spin_decay_rate_per_sec": 0.08
+  },
+  "swing": {
+    "conventional_swing_max_deviation_m": 0.35,
+    "reverse_swing_pace_threshold_kph": 135,
+    "reverse_swing_max_deviation_m": 0.45,
+    "swing_effective_distance_m": 15
+  },
+  "bat_ball_collision": {
+    "coefficient_of_restitution_sweet_spot": 0.85,
+    "coefficient_of_restitution_edge": 0.55,
+    "timing_window_good_ms": 60,
+    "timing_window_early_late_ms": 120,
+    "mistimed_direction_variance_deg": 25
+  },
+  "pitch_bounce": {
+    "base_coefficient_of_restitution": 0.65,
+    "base_seam_deviation_deg": 3.0,
+    "base_spin_grip_coefficient": 0.5
+  },
+  "notes": [
+    "All values here are prototyping placeholders — expect heavy iteration during Milestone 1 (physics prototype) based on playtesting feel, not just real-world physical accuracy.",
+    "pitch_schema.json and ground_schema.json modifiers apply multiplicatively to these base values, not as replacements.",
+    "timing_window_good_ms / timing_window_early_late_ms feed directly into the batting input system (GDD.md control scheme) and the animation blend parameters (animation_requirements.md)."
+  ]
+}

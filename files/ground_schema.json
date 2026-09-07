@@ -1,0 +1,28 @@
+{
+  "$schema": "ground_schema.json",
+  "description": "Schema for a playable ground/stadium. Boundary distances vary by angle for realistic asymmetric grounds.",
+  "example": {
+    "id": "ground_main_01",
+    "name": "Fictional Central Stadium",
+    "size_class": "full",
+    "size_class_options": ["full", "small_gully", "min_boundary_tiny"],
+    "boundary_distances_by_angle_m": {
+      "straight": 70,
+      "cover": 65,
+      "point": 60,
+      "square_leg": 62,
+      "fine_leg": 68,
+      "third_man": 66
+    },
+    "pitch_type_default": "pitch_flat_batting_track",
+    "capacity": 45000,
+    "weather_profile": {
+      "default": "clear",
+      "supports_dynamic_weather": false
+    }
+  },
+  "notes": [
+    "MinBoundary mode grounds use size_class: min_boundary_tiny with boundary_distances_by_angle_m scaled down significantly (e.g. 25-35m).",
+    "weather_profile.supports_dynamic_weather is a stub for a future feature; keep false until weather simulation is actually built."
+  ]
+}

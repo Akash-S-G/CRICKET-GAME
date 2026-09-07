@@ -1,0 +1,42 @@
+{
+  "$schema": "player_schema.json",
+  "description": "Schema for an individual player profile. One asset per player; mirrored as a Unity ScriptableObject (PlayerProfileSO) for in-editor authoring.",
+  "example": {
+    "id": "player_0001",
+    "name": "Fictional Player Name",
+    "role": "batter",
+    "role_options": ["batter", "bowler", "allrounder", "wicketkeeper"],
+    "batting_stats": {
+      "power": 0.75,
+      "timing_window_ms": 180,
+      "preferred_shots": ["cover_drive", "pull", "loft"],
+      "weakness_zones": ["short_ball_outside_off"],
+      "footedness": "front_foot"
+    },
+    "bowling_stats": {
+      "pace_kph": 138,
+      "swing_amount": 0.4,
+      "seam_amount": 0.3,
+      "spin_type": "none",
+      "accuracy": 0.7,
+      "variations": ["yorker", "slower_ball"]
+    },
+    "fielding_stats": {
+      "reaction_time_ms": 220,
+      "throw_power": 0.8,
+      "throw_accuracy": 0.75,
+      "catch_reliability": 0.85,
+      "sprint_speed": 0.7
+    },
+    "physical_build": {
+      "height_cm": 183,
+      "reach_cm": 76
+    },
+    "animation_set_id": "batting_set_A_bowling_set_pace_1"
+  },
+  "notes": [
+    "Stats are normalized 0.0-1.0 where possible (except real-world units like pace_kph, height_cm) so tuning/balancing stays consistent across the roster.",
+    "weakness_zones is an array of tags consumed by AI shot-selection and by bowler AI to target deliberately.",
+    "animation_set_id references an entry in the animation asset registry, not embedded animation data."
+  ]
+}

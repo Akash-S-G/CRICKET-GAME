@@ -1,0 +1,69 @@
+{
+  "$schema": "mode_config_schema.json",
+  "description": "The core data-driven mode definition. New modes should be addable as a new asset conforming to this schema, without new code.",
+  "examples": [
+    {
+      "id": "mode_main_t20",
+      "display_name": "Main Mode - T20",
+      "player_count_per_side": 11,
+      "min_players_to_start": 4,
+      "ai_backfill_allowed": true,
+      "ai_difficulty_default": "full",
+      "overs_per_innings": 20,
+      "powerplay_rules": [
+        { "overs": "1-6", "max_fielders_outside_ring": 2 }
+      ],
+      "physics_fidelity_tier": "full",
+      "ground_size_class": "full",
+      "handoff_radius_m": 3.5,
+      "rule_overrides": {
+        "lbw_enabled": true,
+        "no_ball_height_limit_enabled": true,
+        "free_hit_on_no_ball": true,
+        "tip_and_run_enabled": false
+      }
+    },
+    {
+      "id": "mode_gully",
+      "display_name": "Gully Cricket",
+      "player_count_per_side": 6,
+      "min_players_to_start": 2,
+      "ai_backfill_allowed": true,
+      "ai_difficulty_default": "simplified",
+      "overs_per_innings": 8,
+      "powerplay_rules": [],
+      "physics_fidelity_tier": "simplified",
+      "ground_size_class": "small_gully",
+      "handoff_radius_m": 5.0,
+      "rule_overrides": {
+        "lbw_enabled": false,
+        "no_ball_height_limit_enabled": false,
+        "free_hit_on_no_ball": false,
+        "tip_and_run_enabled": true
+      }
+    },
+    {
+      "id": "mode_minboundary",
+      "display_name": "MinBoundary",
+      "player_count_per_side": 4,
+      "min_players_to_start": 2,
+      "ai_backfill_allowed": true,
+      "ai_difficulty_default": "simplified",
+      "overs_per_innings": 5,
+      "powerplay_rules": [],
+      "physics_fidelity_tier": "simplified",
+      "ground_size_class": "min_boundary_tiny",
+      "handoff_radius_m": 4.0,
+      "rule_overrides": {
+        "lbw_enabled": false,
+        "no_ball_height_limit_enabled": false,
+        "free_hit_on_no_ball": false,
+        "tip_and_run_enabled": false
+      }
+    }
+  ],
+  "notes": [
+    "handoff_radius_m directly feeds controller_handoff_spec.md's trigger condition — larger radius = more forgiving/casual handoff timing.",
+    "This file holds example instances; in the actual project each mode gets its own ScriptableObject asset instance conforming to this schema, not one giant file."
+  ]
+}

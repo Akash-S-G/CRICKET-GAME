@@ -1,0 +1,28 @@
+{
+  "$schema": "pitch_schema.json",
+  "description": "Schema for pitch (wicket) types affecting ball-pitch interaction. Full fidelity tier only reads wear_curve; simplified tier ignores it.",
+  "example": {
+    "id": "pitch_grassy",
+    "name": "Grassy / Green Top",
+    "bounce_modifier": 1.15,
+    "seam_movement_modifier": 1.3,
+    "spin_grip_modifier": 0.7,
+    "wear_curve": {
+      "enabled_for_formats": ["test"],
+      "overs_to_full_wear": 80,
+      "bounce_delta_over_wear": -0.2,
+      "spin_grip_delta_over_wear": 0.5,
+      "cracking_visual_stage_overs": [30, 55, 75]
+    }
+  },
+  "other_types_to_define": [
+    "pitch_dry_dusty",
+    "pitch_worn_final_day",
+    "pitch_flat_batting_track",
+    "pitch_matting_gully"
+  ],
+  "notes": [
+    "Modifiers multiply against base physics constants in delivery_physics_constants.json, not replace them.",
+    "wear_curve only matters for Test-length modes; T20/ODI/Gully/MinBoundary can ignore it (static pitch behavior for the whole match)."
+  ]
+}
