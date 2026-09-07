@@ -2,13 +2,20 @@
 
 This document defines the exact clip set needed for the game. The goal is to avoid vague animation planning and make the production pipeline concrete enough for an animator, mocap session, or AI-assisted content pass.
 
-## 1. Clip Design Rules
+## 1. Clip Design Rules + Source/License Contract (free/AI, no paid subs per user)
 
-- Every core cricket action must have a clean, readable base clip.
-- Critical actions should have variants for timing, power, and context.
-- Clips should be authored for retargeting across the same humanoid rig.
-- Support clips should not be allowed to replace cricket-specific signature motion.
-- Any clip that affects gameplay perception should be validated in-game, not just in DCC software.
+Every clip must carry 3 fields checked by `Assets/_Project/Tools/Editor/ValidateClipNames.cs` `features/02/00_rig_source_and_naming.md:44`:
+- `Source` in `{Mixamo-Free, Cascadeur-Community, Plask-Free, MoveAI-Free, DeepMotion-Free, Blender-Custom}`
+- `License` in `{Mixamo-Free-License, CC0, Custom-AI-Generated, Blender-Custom}` recorded in `licensing_notes.md:5`
+- `EventNorm` normalized contact/release validated `animation_requirements.md:60` `BatContact 0.36-0.44` `BallRelease 0.28-0.38`
+- Rules:
+  - Every core cricket action must have a clean, readable base clip.
+  - Critical actions should have variants for timing, power, and context.
+  - Clips should be authored for retargeting across the same Humanoid `1.8m` rig `animation_requirements.md:22`.
+  - Support clips must not replace signature motion `animation_requirements.md:10` - signature = Cascadeur/Plask/MoveAI + Blender, support = Mixamo-Free.
+  - Any clip that affects gameplay perception should be validated in-game, not just in DCC `animation_requirements.md:60` sidecar `animation_events_sidecar.json`.
+
+Priority fallback (`TDD.md:87` Low tier): Priority 1 runs everywhere, Priority 2 may fallback to Priority 1 (`shouldFallback:true`), Priority 3 may be Addressables or skipped on Low `system_design/addressables_grouping.md:16`.
 
 ## 2. Player Base Locomotion
 
@@ -374,11 +381,15 @@ Needed across clips:
 
 ## 13. Production Checklist
 
-- [ ] Base rig retargets correctly.
-- [ ] Batting timing variants look distinct.
-- [ ] Bowling actions feel cricket-specific.
-- [ ] Fielding handoffs are readable.
-- [ ] Keeper actions support stumping and edges.
-- [ ] Presentation clips can drive intro and replay flow.
-- [ ] Clips are named consistently for AI-assisted workflows.
-- [ ] Every important gameplay moment has a matching animation.
+- [ ] Base rig `1.8m` Humanoid `socket_bat_handle` retargets correctly `features/02/00_rig_source_and_naming.md:16`.
+- [ ] Batting `early/good/late` variants `animation_requirements.md:60` `BatContact 0.36-0.44` carry deliveryId `animation_events_sidecar.json:1`.
+- [ ] Bowling `BallRelease 0.28-0.38` `animation_requirements.md:60` Distinct arms per `player_schema.json:17` pace vs spin `GDD.md:178` table.
+- [ ] Fielding handoffs `TDD.md:75` `0.15s` blend validated `controller_handoff_spec.md:42`.
+- [ ] Keeper `keeper_*` Priority 2 fallback to `field_*` on Low `TDD.md:87` `shouldFallback:true` `animation_events_sidecar.json:1`.
+- [ ] Presentation `intro_*` `replay_*` Addressables on Low skipped `system_design/addressables_grouping.md:16`.
+- [ ] Clips named `[Character]_[Action]_[Variant]_[Timing]` + `Source`/`License` non-empty `features/02/00_rig_source_and_naming.md:44` validator.
+- [ ] Every `Source` in `{Mixamo-Free, Cascadeur-Community, Plask-Free, MoveAI-Free, DeepMotion-Free, Blender-Custom}` free pipeline `animation_requirements.md:10` recorded `licensing_notes.md:5`.
+
+## 14. Per-Group Source, License, EventNorm (free pipeline)
+
+See `animation_events_sidecar.json:1` for machine-readable. Summary: `idle_*`/`walk_*`/`field_*` base = Mixamo-Free, `bat_*`/`bowl_*`/`keeper_*` signature = Plask/MoveAI Free -> Cascadeur -> Blender Custom `Blender-Custom`/`Custom-AI-Generated`, Priority 1 everywhere on Low, fallback `shouldFallback:true` for P2/P3 `TDD.md:87`. Events: `BatContact 0.40` (0.36-0.44), `BallRelease 0.33` (0.28-0.38) `animation_requirements.md:60` server authoritative `TDD.md:96`.

@@ -68,15 +68,10 @@ The UI must:
 
 ## 4. Progression Design
 
-### 4.1 What Progression Does
+### 4.1 What Progression Does (non-P2W `GDD.md:214`, validated server-side `system_design/security_threat_model.md:16`)
 
-Progression should reward:
-
-- play time,
-- skill improvement,
-- match performance,
-- consistency,
-- short-session engagement.
+- XP per match `GDD.md:214` + local `profile.json` progression `system_design/save_schema_versioning.md:33` synced field-merge `system_design/save_schema_versioning.md:46`; server validates `OnRewardGranted` `system_design/state_machines_and_event_model.md:33` via Cloud Code `system_design/remote_config_and_analytics.md:16` `progression_xp_multiplier:1.0` default.
+- Tracked via `reward_granted`/`unlock_completed` `system_design/remote_config_and_analytics.md:34` with `session_id/profile_id/build_hash` `system_design/analytics_events_schema.json:1`.
 
 ### 4.2 What Progression Unlocks
 
@@ -112,30 +107,23 @@ The mobile version should have:
 
 ## 5. Mobile Performance Tasks
 
-### 5.1 Performance Tiers
+### 5.1 Performance Tiers (locked `system_design.md:188` + `system_design/addressables_grouping.md:31`)
 
-- low-end devices,
-- default mobile devices,
-- high-end mobile devices.
+- Low Snapdragon 660 30fps 1.5M tris 70 draws `system_design.md:188` Priority-1 anim `animation_clip_inventory.md:345` no keeper `TDD.md:87` `Boot` 15MB.
+- Mid Snapdragon 720G 45-60fps 2.5M 100 draws.
+- High Snapdragon 865+ 60fps 3.5M 130 draws.
+- Auto-select via `SystemInfo` `features/06/03_mobile_performance_and_settings.md:16` override in Customize `scene_by_scene_setup.md:177`.
 
-### 5.2 Performance Work
+### 5.2 Performance Work (`system_design/build_pipeline.md:16` CI perf gate + `system_design/observability_stack.md:24` metrics)
 
-- reduce heavy rendering where possible,
-- keep UI efficient,
-- keep memory use under control,
-- avoid expensive scene transitions,
-- make loading fast,
-- keep battery impact reasonable.
+- URP Low/Mid/High `system_design.md:188` + Addressables `CoreGameplay` local `system_design/addressables_grouping.md:16` + additive `scene_by_scene_setup.md:212` `Boot->Home`.
+- Metrics `boot time`, `scene load time`, `frame budget violations` `system_design/observability_stack.md:24` sampled; CI builds Android on every `feat/06` push `system_design/build_pipeline.md:8`.
+- Battery: Low tier 30fps, no soft shadows, crowd sprites `system_design.md:188`.
 
-### 5.3 Mobile Settings
+### 5.3 Mobile Settings (persisted `ISaveService` `system_design/service_interfaces.md:16`)
 
-Include:
-
-- sensitivity options,
-- camera defaults,
-- assist options,
-- graphics tier selection,
-- control simplification options.
+- Sensitivity 0.5-2.0 `features/05_camera_input_tutorial_flow.md:87`, `handoff_radius_m` `system_design/remote_config_and_analytics.md:8` fallback 3.5, `CameraConfig` SO `unity_ai_workflow_and_project_structure.md:73`, tier auto + manual `scene_by_scene_setup.md:177` saved in `profile.json` `system_design/save_schema_versioning.md:33` + `TutorialStepData` `player_onboarding_and_tutorial_flow.md:59`.
+- Offline-first: settings available without `IRemoteConfigService` fetch `system_design/remote_config_and_analytics.md:16` cached fallback.
 
 ## 6. Expected Output
 

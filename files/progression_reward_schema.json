@@ -1,0 +1,18 @@
+{
+  "$schema": "progression_reward_schema.json",
+  "description": "Schema for XP and cosmetic unlocks. Non-P2W per GDD.md:214, validated server-side per system_design/security_threat_model.md:16.",
+  "type": "object",
+  "required": ["id", "xp", "unlockType"],
+  "properties": {
+    "id": { "type": "string" },
+    "xp": { "type": "integer", "minimum": 0 },
+    "unlockType": { "type": "string", "enum": ["cosmetic", "badge", "camera_skin", "practice_content", "none"] },
+    "requiresLevel": { "type": "integer", "minimum": 1 },
+    "progressionXPMultiplier": { "type": "number", "default": 1.0, "description": "Remote Config key progression_xp_multiplier" }
+  },
+  "examples": [
+    { "id": "reward_match_win", "xp": 50, "unlockType": "none", "requiresLevel": 1 },
+    { "id": "reward_wicket_3", "xp": 30, "unlockType": "badge", "requiresLevel": 2 },
+    { "id": "reward_level_5", "xp": 0, "unlockType": "cosmetic", "requiresLevel": 5 }
+  ]
+}

@@ -1,0 +1,154 @@
+{
+  "$schema": "animation_events_sidecar.json",
+  "description": "Per-clip normalized event times and fallback. Server owns resolution, client event is visual per TDD.md:96 and animation_requirements.md:60.",
+  "rig": "Unity Humanoid 1.8m neutral T-pose, sockets socket_bat_handle/socket_ball_hand",
+  "defaultRanges": {
+    "BatContact": [0.36, 0.44],
+    "BallRelease": [0.28, 0.38],
+    "CatchPoint": [0.45, 0.65],
+    "ThrowRelease": [0.35, 0.55],
+    "StumpBreak": [0.45, 0.60]
+  },
+  "groups": [
+    {
+      "section": "2.1 Idle and Ready",
+      "pattern": "idle_*",
+      "Source": "Mixamo-Free",
+      "License": "Mixamo-Free-License",
+      "Priority": 1,
+      "shouldFallback": true,
+      "Event": null
+    },
+    {
+      "section": "2.2 Movement",
+      "pattern": "walk_*|jog_*|run_*|sprint_*|pivot_*|stop_*|start_run",
+      "Source": "Mixamo-Free",
+      "License": "Mixamo-Free-License",
+      "Priority": 1,
+      "shouldFallback": true,
+      "Event": null
+    },
+    {
+      "section": "3.1 Stance and Preparation",
+      "pattern": "bat_stance_*|bat_prepare_*",
+      "Source": "Cascadeur-Community+Blender",
+      "License": "Blender-Custom",
+      "Priority": 1,
+      "shouldFallback": true,
+      "Event": { "BatContact": null }
+    },
+    {
+      "section": "3.2 Defensive Shots",
+      "pattern": "bat_defensive_*|bat_block_*",
+      "Source": "Plask-Free/MoveAI-Free->Cascadeur-Community->Blender-Custom",
+      "License": "Custom-AI-Generated",
+      "Priority": 1,
+      "shouldFallback": false,
+      "Event": { "BatContact": 0.40 }
+    },
+    {
+      "section": "3.3 Drive Shots",
+      "pattern": "bat_drive_*",
+      "Source": "Plask-Free/MoveAI-Free->Cascadeur-Community->Blender-Custom",
+      "License": "Custom-AI-Generated",
+      "Priority": 1,
+      "shouldFallback": false,
+      "Event": { "BatContact": 0.40 }
+    },
+    {
+      "section": "3.4 Cut and Square Shots",
+      "pattern": "bat_cut_*|bat_square_drive_*",
+      "Source": "Plask-Free/MoveAI-Free->Cascadeur-Community->Blender-Custom",
+      "License": "Custom-AI-Generated",
+      "Priority": 1,
+      "shouldFallback": false,
+      "Event": { "BatContact": 0.39 }
+    },
+    {
+      "section": "3.5 Pull and Hook",
+      "pattern": "bat_pull_*|bat_hook_*",
+      "Source": "Plask-Free/MoveAI-Free->Cascadeur-Community->Blender-Custom",
+      "License": "Custom-AI-Generated",
+      "Priority": 1,
+      "shouldFallback": false,
+      "Event": { "BatContact": 0.41 }
+    },
+    {
+      "section": "3.6 Sweep and Reverse Sweep",
+      "pattern": "bat_sweep_*|bat_reverse_sweep_*",
+      "Source": "Plask-Free/MoveAI-Free->Cascadeur-Community->Blender-Custom",
+      "License": "Custom-AI-Generated",
+      "Priority": 2,
+      "shouldFallback": true,
+      "Event": { "BatContact": 0.42 }
+    },
+    {
+      "section": "3.7 Lofted and Power Shots",
+      "pattern": "bat_loft_*|bat_six_hit_*",
+      "Source": "Plask-Free/MoveAI-Free->Cascadeur-Community->Blender-Custom",
+      "License": "Custom-AI-Generated",
+      "Priority": 1,
+      "shouldFallback": false,
+      "Event": { "BatContact": 0.38 }
+    },
+    {
+      "section": "3.8 Mistimed Outcomes",
+      "pattern": "bat_edge_*|bat_top_edge|bat_miss_*|bat_inside_edge",
+      "Source": "Blender-Custom",
+      "License": "Blender-Custom",
+      "Priority": 1,
+      "shouldFallback": false,
+      "Event": { "BatContact": 0.40 }
+    },
+    {
+      "section": "3.9 Running Between Wickets",
+      "pattern": "bat_run_*|bat_turn_*|bat_dive_*|bat_slide_*|bat_call_*",
+      "Source": "Mixamo-Free",
+      "License": "Mixamo-Free-License",
+      "Priority": 1,
+      "shouldFallback": true,
+      "Event": null
+    },
+    {
+      "section": "4 Bowling Run-Up and Deliveries",
+      "pattern": "bowl_*",
+      "Source": "Plask-Free/MoveAI-Free->Cascadeur-Community->Blender-Custom",
+      "License": "Custom-AI-Generated",
+      "Priority": 1,
+      "shouldFallback": false,
+      "Event": { "BallRelease": 0.33 }
+    },
+    {
+      "section": "5 Fielding",
+      "pattern": "field_*",
+      "Source": "Mixamo-Free for base, Blender-Custom for dives",
+      "License": "Mixamo-Free-License / Blender-Custom",
+      "Priority": 1,
+      "shouldFallback": true,
+      "Event": { "CatchPoint": 0.55, "ThrowRelease": 0.45 }
+    },
+    {
+      "section": "6 Wicketkeeper",
+      "pattern": "keeper_*",
+      "Source": "Plask-Free->Blender-Custom",
+      "License": "Custom-AI-Generated",
+      "Priority": 2,
+      "shouldFallback": true,
+      "Event": { "CatchPoint": 0.52, "StumpBreak": 0.52 }
+    },
+    {
+      "section": "7 Umpire + 8 Presentation + 9 Replay",
+      "pattern": "umpire_*|intro_*|results_*|reward_*|replay_*",
+      "Source": "Mixamo-Free or Blender-Custom",
+      "License": "Mixamo-Free-License / Blender-Custom",
+      "Priority": 3,
+      "shouldFallback": true,
+      "Event": null
+    }
+  ],
+  "notes": [
+    "Free pipeline per user request: no Rokoko/subscription. Generate via phone video -> Plask/MoveAI/DeepMotion free tier -> Cascadeur Community -> Blender Humanoid retarget.",
+    "Validator Editor/ValidateClipNames.cs checks Source in allowed set and License not empty and Event in range.",
+    "Every entry recorded in licensing_notes.md before import."
+  ]
+}

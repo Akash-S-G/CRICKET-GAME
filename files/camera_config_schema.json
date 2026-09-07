@@ -1,0 +1,19 @@
+{
+  "$schema": "camera_config_schema.json",
+  "description": "Schema for camera presets per mode. Drives ScriptableObjects/Cameras/ and Remote Config override per system_design/remote_config_and_analytics.md:8.",
+  "type": "object",
+  "required": ["id", "modeId", "fovDeg", "blendSec", "supportsMobile"],
+  "properties": {
+    "id": { "type": "string" },
+    "modeId": { "type": "string", "enum": ["BattingBroadcast", "BowlingEnd", "FPPBatter", "MidWicket", "Chase", "TopDown", "Replay"] },
+    "fovDeg": { "type": "number", "minimum": 30, "maximum": 75 },
+    "blendSec": { "type": "number", "minimum": 0.1, "maximum": 0.5 },
+    "supportsMobile": { "type": "boolean" },
+    "defaultForModes": { "type": "array", "items": { "type": "string" } }
+  },
+  "examples": [
+    { "id": "cam_batting_broadcast", "modeId": "BattingBroadcast", "fovDeg": 48, "blendSec": 0.30, "supportsMobile": true, "defaultForModes": ["mode_main_t20"] },
+    { "id": "cam_fpp", "modeId": "FPPBatter", "fovDeg": 62, "blendSec": 0.20, "supportsMobile": true, "defaultForModes": ["mode_nets"] },
+    { "id": "cam_topdown", "modeId": "TopDown", "fovDeg": 50, "blendSec": 0.35, "supportsMobile": true, "defaultForModes": ["mode_gully"] }
+  ]
+}

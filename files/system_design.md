@@ -139,15 +139,16 @@ Only the session source changes:
 
 ## 6. Game Domain Design
 
-### 6.1 State Machines
+### 6.1 State Machines (locked per `system_design/state_machines_and_event_model.md:8`)
 
-The game should be driven by explicit state machines:
+The game is driven by typed state machines (no string polling):
 
-- App state: boot, auth, home, loading, in-match, results, offline fallback
-- Match state: toss, innings, over, delivery, dead ball, result
-- Player state: idle, batting, bowling, fielding, transitioning, disconnected
-- Camera state: default, override, replay, cutscene, training
-- Progression state: unlock pending, reward claim, synced, stale cache
+- App: `Boot->Auth->Home->Loading->InMatch->Results`, plus `OfflineFallback`/`ErrorRecovery` from any state on failure `system_design/state_machines_and_event_model.md:16`
+- Match: `NotStarted->TossPhase->Innings1->InningsBreak->Innings2->Complete` `system_design/state_machines_and_event_model.md:28`
+- Delivery: `Bowling->InFlight->BatterAction->BallDead->Resolved` `system_design/state_machines_and_event_model.md:34`
+- Player: `Idle/Batting/Bowling/Fielding/Transitioning/Disconnected` maps to `TDD.md:50` `ControllerState` + 0.15s blend `TDD.md:75`
+- Camera: `Default/Override/Replay/Cutscene/Training` `system_design/state_machines_and_event_model.md:40`
+- Progression: unlock pending, reward claim, synced, stale cache
 
 ### 6.2 Domain Rules
 
@@ -164,30 +165,32 @@ The domain layer should own:
 
 UI and camera should only react to domain events.
 
-### 6.3 Event Model
+### 6.3 Event Model (typed bus, tick-ordered)
 
-Use domain events for important transitions:
+Events are strongly typed payloads `system_design/state_machines_and_event_model.md:43`, domain emits before presentation:
 
-- `OnMatchStarted`
-- `OnTossComplete`
-- `OnBallDelivered`
-- `OnShotPlayed`
-- `OnWicketFallen`
-- `OnOverComplete`
-- `OnInningsEnded`
-- `OnRewardGranted`
+- `OnBootStarted`/`OnAuthResolved`/`OnContentReady` `system_design/state_machines_and_event_model.md:33`
+- `OnMatchStarted`/`OnTossComplete`/`OnBallDelivered`/`OnShotPlayed`/`OnWicketFallen`/`OnOverComplete`/`OnInningsEnded`/`OnRewardGranted` `system_design/state_machines_and_event_model.md:33`
+- `OnHandoffTriggered`/`OnHandoffConfirmed`/`OnSaveConflict` `system_design/state_machines_and_event_model.md:33`
 
-This avoids polling and keeps presentation decoupled from rules.
+Bus: domain `C# event` or typed bus, no string broadcasts. Payload carries `DeliveryId` + `ServerTick` `TDD.md:58` `PhysicalState`. Replication uses intent `shotType/timingQuality/shotPower/deliveryType` `TDD.md:41` not Animator transforms `system_design/physics_tick_and_reconciliation.md:24`.
 
 ## 7. Mobile-First Runtime Architecture
 
-### 7.1 Device Tiers
+### 7.1 Device Tiers (locked: Recommended Snapdragon 660 / 4GB baseline)
 
-The app should support at least three performance tiers:
+The app must support three locked tiers. Budgets are enforced per tier and drive URP asset choice.
 
-- Low: minimum-viable visuals, aggressive culling, simplified crowds and effects
-- Mid: default mobile quality
-- High: better shadows, crowd density, camera polish, replay fidelity
+| Tier | Target Device | FPS | Tris/Frame | Draw Calls | Shadows | Crowd | Texture Budget | Install |
+|---|---|---|---|---|---|---|---|---|
+| **Low** | Snapdragon 660, Adreno 512, 3-4GB RAM, Android 8+ / iPhone 8 | 30 | <1.5M | <70 | Off | 25% sprites, no 3D crowd | 1K atlases, ETC2 | <120 MB base |
+| **Mid** | Snapdragon 720G, Adreno 618, 4-6GB | 45-60 | <2.5M | <100 | 512 low | 50% | 2K atlases | <150 MB |
+| **High** | Snapdragon 865+, Adreno 650+, 6GB+ | 60 | <3.5M | <130 | 1024 med | 100% 3D | 2K+ | <200 MB |
+
+Rules:
+- Low uses Priority-1 animation only (`animation_clip_inventory.md:345`), no keeper layer, single IK pass.
+- Selection auto on boot via `SystemInfo.processorCount` + `SystemInfo.systemMemorySize` + `Application.persistentDataPath` benchmark, override in Settings.
+- URP assets: `URP-Low` (no shadows, no HDR), `URP-Mid` (hard shadows), `URP-High` (soft shadows + post bloom limited) per `unity_ai_workflow_and_project_structure.md:18`.
 
 ### 7.2 Mobile Optimization Strategy
 
@@ -227,26 +230,24 @@ Use data assets for:
 - difficulty tuning,
 - cosmetic catalogs.
 
-### 8.2 Addressable Content
+### 8.2 Addressable Content (locked: Unity CCD)
 
-Use Addressables for content that should be:
+Groups and delivery per `system_design/addressables_grouping.md:1`:
 
-- loaded on demand,
-- updated without full app rebuilds,
-- packaged for seasonal or live-ops delivery,
-- separated from the base install.
+| Group | Included in Base | Delivery | Example Assets |
+|---|---|---|---|
+| `Boot` | Yes <15 MB | Local | splash, core fonts, UIRoot |
+| `CoreGameplay` | Yes | Local | ball/bat/pitch, core HUD, `ModeConfig` SO |
+| `Tutorial` | No | On-demand at `Home` | overlays, VO |
+| `Nets` | No | On-demand | nets props |
+| `Stadiums` | No | Remote CCD | stadium mesh 10-20 MB each, crowd |
+| `Cosmetics` | No | Remote CCD | kits, badges |
 
-This is especially important for:
-
-- stadiums,
-- cosmetic packs,
-- tutorial overlays,
-- replay assets,
-- optional training content.
+Rule: Match-critical assets never gate `Match_Play` load. Remote failure falls back to `ground_schema.json:4` `capacity` default + flat pitch.
 
 ### 8.3 Content Delivery
 
-Use remote content distribution for non-core assets so the base mobile install stays small and updates stay manageable.
+Unity CCD hosts remote catalog; local bundle copy for `Stadiums` fallback. Bounded LRU cache, never evict `Boot`/`CoreGameplay`. Use `IContentService` `system_design/service_interfaces.md:42` `PreloadBootContentAsync` / `LoadModeContentAsync`.
 
 ## 9. Persistence and Identity
 
@@ -272,13 +273,13 @@ Store in cloud services:
 - cloud-synced settings,
 - multiplayer entitlement or session metadata.
 
-### 9.3 Save Strategy
+### 9.3 Save Strategy (locked: file + Unity Cloud Save)
 
-Use a split save model:
+Layout per `system_design/save_schema_versioning.md:16`: `Application.persistentDataPath/profiles/<profileId>/profile.json` + `.backup.json` + `.meta.json`, JSON UTF-8, `PlayerPrefs` never for profile. Services: `ISaveService` + `IAuthService` + `ISessionService` `system_design/service_interfaces.md:16`.
 
-- local cache for instant startup and offline resilience,
-- cloud sync for cross-device continuity,
-- conflict resolution based on the most recent trusted server state.
+- Local cache for instant boot; Cloud Save (UGS) for continuity via `ISaveService` `LoadProfile`/`SaveProfile` with atomic temp-file swap.
+- Every object carries `schemaVersion`/`dataVersion`/`updatedAtUtc`/`sourceAppVersion` `system_design/save_schema_versioning.md:33`. Migrations `ProfileDataV2->V3` pure, tested.
+- Conflict: field-level merge, server wins for progression/unlocks, local wins for transient settings if newer `system_design/save_schema_versioning.md:46`. Record `save_conflict_detected` analytics `system_design/remote_config_and_analytics.md:34`.
 
 ## 10. Multiplayer Architecture
 
@@ -384,69 +385,60 @@ Therefore:
 - sensitive tuning values should be remote-configured, not hard-coded,
 - matchmaking should be authenticated.
 
-## 14. Production Build Pipeline
+## 14. Production Build Pipeline (locked: GitHub Actions + GameCI)
+
+Spec `system_design/build_pipeline.md:1`:
 
 ### 14.1 Build Steps
 
-- code review,
-- automated tests,
-- build verification,
-- mobile package generation,
-- server build generation,
-- smoke testing,
-- staged rollout.
+- code review (main protected, PR required),
+- `Unity -runTests -testMode EditMode` + `PlayMode` smoke,
+- build verification (GameCI `builder@v4`),
+- mobile APK/AAB + server headless (`dedicatedServer` target) generation,
+- smoke: `Boot->Home->Nets` auto test `features/08_testing_ci_and_release.md:16`,
+- staged: internal -> QA -> prod.
 
 ### 14.2 Environments
 
-Maintain at least:
-
-- local/dev,
-- QA/staging,
-- production.
+- local/dev (local `Application.persistentDataPath`),
+- QA/staging (UGS staging, CCD staging catalog),
+- production (UGS prod).
 
 ### 14.3 CI/CD
 
-Use CI to validate:
+On every `feat/*` push: restore packages, `EditMode` + `PlayMode` tests, build Android, validate `mode_config_schema.json:2` via `ajv`, publish logs + `build_hash`. Git LFS tracks `*.png *.fbx *.wav *.unity` `system_design/build_pipeline.md:34`. LFS resolve verified in CI. Fail fast on compile.
 
-- compile integrity,
-- unit tests,
-- basic play mode tests,
-- mobile build success,
-- dedicated server build success,
-- content schema validity.
+## 15. Observability and Recovery (UGS + Crash Reporting, offline-buffered)
 
-## 15. Observability and Recovery
+Track per `system_design/observability_stack.md:16` + `system_design/remote_config_and_analytics.md:34` events `session_start/match_start/delivery_resolved/handoff_triggered/save_conflict_detected`:
+- crashes/ANRs (Crash Reporting via UGS Diagnostics + breadcrumbs `system_design/observability_stack.md:24`),
+- disconnect rates, matchmaking failures, server tick spikes `physics_tick_and_reconciliation.md:16` 30Hz,
+- rules desyncs, content load failures.
 
-Production-ready means the game must fail safely.
+Recovery (fail-safe `system_design/security_threat_model.md:33`):
+- offline fallback if `IAuthService.RestoreSessionAsync` `system_design/service_interfaces.md:26` fails,
+- cached `Stadiums` if CCD fetch fails `system_design/addressables_grouping.md:31`,
+- preserve last good `profile.backup.json` `system_design/save_schema_versioning.md:16`,
+- retry cloud sync on next `OnBootStarted` `system_design/state_machines_and_event_model.md:33`,
+- never trust client for `OnRewardGranted` `system_design/security_threat_model.md:33` server validates.
 
-Track:
+## 16. Recommended Tech Choices (pinned before Feature 00)
 
-- crashes,
-- ANRs or freezes on mobile,
-- disconnect rates,
-- matchmaking failures,
-- server tick spikes,
-- rules desyncs,
-- content load failures.
+| Choice | Locked Value | Where Pinned |
+|---|---|---|
+| Engine | Unity 6 LTS `6000.0.x` exact patch in `ProjectSettings/ProjectVersion.txt` | `TDD.md:5` |
+| Rendering | URP 17.x (3 assets Low/Mid/High `system_design.md:188`) | `TDD.md:6` |
+| Runtime UI | uGUI; UI Toolkit editor-only | `TDD.md:7` + `system_design/ui_architecture_and_navigation.md:8` uGUI |
+| Animation | Animation Rigging 1.2.x, Cinemachine 3.0.x, Timeline | `TDD.md:8` |
+| Input | Input System 1.11.x, Action Maps `system_design/input_action_maps.md:6` | `system_design.md:32` |
+| Networking | NGO 2.4.x server-authoritative, Fusion 2 fallback only at Main Mode go/no-go `TDD.md:9` | `TECH_STACK.md:15` |
+| Content | Addressables 2.x + CCD `system_design/addressables_grouping.md:1` | `system_design.md:240` |
+| Persistence | `ISaveService` file JSON `system_design/save_schema_versioning.md:16` + UGS Cloud Save | `system_design.md:275` |
+| Config/Analytics | UGS Remote Config + Analytics `system_design/remote_config_and_analytics.md:8` | `system_design.md:333` |
+| Services | UGS Auth/Cloud Save/Remote Config/Analytics/Relay/Lobby | `system_design.md:295` |
+| Project Structure | `Assets/_Project/...` per `unity_ai_workflow_and_project_structure.md:18` (authoritative) | `TDD.md:105` |
 
-Recovery behavior:
-
-- fallback to offline mode if services fail,
-- fallback to cached content if remote delivery fails,
-- preserve last known safe profile state,
-- retry sync on next launch.
-
-## 16. Recommended Tech Choices
-
-- Engine: Unity 6 LTS
-- Rendering: URP
-- Runtime UI: uGUI for runtime game UI
-- Editor tooling: UI Toolkit where useful
-- Networking: NGO first, dedicated server path for competition, Photon Fusion only if needed later
-- Content: Addressables + remote delivery
-- Persistence: local cache + cloud save
-- Config: Remote Config
-- Multiplayer services: authentication, matchmaking, hosting, server allocation
+Main Mode PC/console uses same project, `Gully`/`MinBoundary` simplified tier `TDD.md:81` `TECH_STACK.md:28`.
 
 ## 17. Implementation Order
 

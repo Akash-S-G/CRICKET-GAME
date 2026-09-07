@@ -1,12 +1,13 @@
 # Technical Design Document (TDD)
 
-## 1. Engine & Version
+## 1. Engine & Version (exact pins, free pipeline no subs)
 
-- Unity 6 LTS (exact patch pinned in `ProjectSettings/ProjectVersion.txt` and Feature 00 before implementation)
-- Render pipeline: URP (better mobile performance for Gully/MinBoundary; sufficient fidelity for Main Mode on PC/console)
-- Runtime UI: uGUI; UI Toolkit is editor-only unless a feature doc explicitly overrides this.
-- Animation packages: Animation Rigging `1.2.x`, Cinemachine `3.0.x`, Timeline from the pinned Unity release.
-- Networking: Netcode for GameObjects version pinned in `Packages/manifest.json`.
+- Unity 6 LTS `6000.0.41f1` pinned in `ProjectSettings/ProjectVersion.txt` `features/00_foundation_and_tooling.md:16` (no floating `x`).
+- URP `17.0.3`, Input System `1.11.2`, Addressables `2.2.2`, UGS Auth/Cloud Save/Remote Config/Analytics latest per `Packages/manifest.json` `system_design.md:443`.
+- Runtime UI: uGUI `system_design/ui_architecture_and_navigation.md:8`; UI Toolkit editor-only.
+- Animation: Animation Rigging `1.3.0`, Cinemachine `3.0.1`, Timeline from Unity 6000.0.41f1 (free stack `animation_requirements.md:10` Cascadeur Community + Mixamo Free + Plask/MoveAI Free).
+- Netcode: NGO `2.4.0` pinned, Fusion 2 fallback only at Main Mode go/no-go `TECH_STACK.md:15`.
+- No paid mocap subs; all animation sources free/AI per user + `licensing_notes.md:5` table.
 
 ## 2. High-Level Architecture
 

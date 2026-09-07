@@ -4,18 +4,22 @@
 
 This doc freezes the project setup so feature work cannot drift on package choices or editor assumptions.
 
-## Locked Choices
+## Locked Choices (free pipeline, no subs - pinned exact per user)
 
-- Unity 6 LTS
-- URP for runtime rendering
-- Input System package
-- Addressables package
-- Cinemachine package
-- Timeline package
-- Animation Rigging package
-- Netcode for GameObjects package
-- Git LFS for binary assets
-- Unity MCP connected for AI/editor workflows
+| Package | Version | Source |
+|---|---|---|
+| Unity Editor | `6000.0.41f1` | `ProjectSettings/ProjectVersion.txt:1` |
+| URP | `17.0.3` | `Packages/manifest.json:1` |
+| Input System | `1.11.2` | `system_design/input_action_maps.md:6` |
+| NGO | `2.4.0` | `TDD.md:5` |
+| Addressables | `2.2.2` | `system_design/addressables_grouping.md:16` |
+| Animation Rigging | `1.3.0` | `animation_requirements.md:10` |
+| Cinemachine | `3.0.1` | `animation_and_scene_pipeline_roadmap.md:318` |
+| Timeline | `1.8.6` (from Unity) | `animation_and_scene_pipeline_roadmap.md:74` |
+| UGS Auth/CloudSave/RemoteConfig/Analytics/Relay/Lobby | latest 3.x/5.x | `system_design.md:443` |
+| Git LFS + Unity MCP | per `system_design/build_pipeline.md:34` | `TECH_STACK.md:5` free tools only: Mixamo/Cascadeur/Plask/MoveAI |
+
+No paid mocap. Animation from free AI + Mixamo `licensing_notes.md:5`.
 
 ## Manifest Rules
 

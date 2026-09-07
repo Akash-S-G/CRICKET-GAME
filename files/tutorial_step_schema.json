@@ -1,0 +1,18 @@
+{
+  "$schema": "tutorial_step_schema.json",
+  "description": "Schema for TutorialStepData SO per player_onboarding_and_tutorial_flow.md:59 and features/05/03_tutorial_and_first_run_flow.md:16. Persisted tutorialCompleted in profile.json per system_design/save_schema_versioning.md:33.",
+  "type": "object",
+  "required": ["id", "order", "prompt", "successGate"],
+  "properties": {
+    "id": { "type": "string" },
+    "order": { "type": "integer", "minimum": 1 },
+    "prompt": { "type": "string" },
+    "successGate": { "type": "string", "enum": ["defend_ball", "score_single", "bowl_target", "field_action", "camera_switch", "match_enter"] },
+    "cameraMode": { "type": "string" },
+    "nextStepId": { "type": ["string", "null"] }
+  },
+  "examples": [
+    { "id": "tut_bat_defend", "order": 1, "prompt": "Defend one ball", "successGate": "defend_ball", "cameraMode": "BattingBroadcast", "nextStepId": "tut_bat_single" },
+    { "id": "tut_bat_single", "order": 2, "prompt": "Score a single", "successGate": "score_single", "cameraMode": "BattingBroadcast", "nextStepId": null }
+  ]
+}

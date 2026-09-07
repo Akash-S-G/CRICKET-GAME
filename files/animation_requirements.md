@@ -7,7 +7,7 @@ Options, roughly in order of fidelity vs cost:
 2. **Marketplace/Mixamo-sourced + retargeted** — fast, cheap, generic; fine for fielding/running, likely too generic-looking for the signature batting/bowling actions that need to feel "cricket-specific."
 3. **Procedural/IK-driven** — most flexible for blending (e.g., continuously variable bowling arm angle for different deliveries) but requires more animation-engineering time upfront.
 
-**Locked decision:** hybrid. Use Rokoko or equivalent captured/bespoke motion for the 30 signature batting and bowling clips, Mixamo or licensed marketplace motion for approximately 40 locomotion/support clips, and Animation Rigging for procedural variation and correction. The source and license for every imported clip must be recorded before import; Mixamo is not permitted for signature batting or bowling clips.
+**Locked decision (free/AI-only, no paid subs):** hybrid with free tools. Use AI-generated + hand-tweaked motion for the 30 signature batting/bowling clips via Cascadeur (free) + Blender (free) + AI video-to-motion (Move AI free tier / DeepMotion free / Plask free) captured from self-recorded reference, then cleaned in Blender. Use Mixamo (free Adobe account) for ~40 locomotion/support clips. Use Animation Rigging 1.3.0 for procedural variation. No Rokoko or paid mocap. Every clip's `Source`/`License` must be recorded in `animation_clip_inventory.md` + `licensing_notes.md` before import; Mixamo is not permitted for signature clips.
 
 ### Production Budget
 
@@ -17,9 +17,18 @@ Options, roughly in order of fidelity vs cost:
 - Use 30 fps authored clips for gameplay actions unless a reference requires 60 fps; compress clips with Unity keyframe reduction after contact/release validation.
 - Priority 1 clips must run on Low. Priority 2 clips may fall back to Priority 1 or a generic reaction. Priority 3 clips are optional on Low and may be Addressables content.
 
-## 1.1 Locked Rig Standard
+## 1.1 Locked Rig Standard (free pipeline)
 
-Use Unity Humanoid with a neutral T-pose, a `1.8 m` reference height, and stable Unity Human Bone mapping. Required bones are hips, spine/chest/upper chest, neck/head, clavicles, upper/lower arms, hands, upper/lower legs, feet, toes, and named bat-hand sockets. Bat and ball props attach through sockets, never through clip-specific world offsets.
+Unity Humanoid, neutral T-pose, `1.8 m`, 30k tris Mid/High 18k Low. Bones: Hips, Spine, Chest, UpperChest, Neck, Head, Shoulder/Clavicle L/R, UpperArm, LowerArm, Hand, UpperLeg, LowerLeg, Foot, Toe (14 per side). Sockets: `socket_bat_handle` (weapon bone) + `socket_ball_hand`. Tools: Mixamo auto-rig -> Blender Humanoid retarget -> Unity Humanoid avatar. Validate `features/02/00_rig_source_and_naming.md:16` with `Editor/ValidateClipNames.cs`.
+
+### Free Generation Stack
+
+| Need | Tool (free) | Output |
+|---|---|---|
+| Signature batting/bowling | Cascadeur Community + Blender + Plask/MoveAI free (phone video->FBX) | FBX 30 fps, T-pose, Humanoid |
+| Locomotion/fielding support | Mixamo (free) | FBX Humanoid |
+| Variation/correction | Animation Rigging 1.3.0 + Cascadeur physics | IK passes |
+| Scene previz | Blender + AI image (Stable Diffusion) -> Timeline previz | MP4 ref |
 
 ## 2. Required Action Inventory
 

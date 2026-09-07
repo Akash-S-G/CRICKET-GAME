@@ -30,18 +30,12 @@ This feature defines the “cricket identity” of the game.
 
 ## 3. Rig and Retargeting Strategy
 
-### 3.1 Shared Humanoid Rig
+### 3.1 Shared Humanoid Rig (locked: Unity Humanoid, 1.8m, Rokoko hybrid)
 
-Build one standard humanoid rig that every player character can use.
-
-The rig must support:
-
-- bats,
-- bowling actions,
-- keeper crouches,
-- fielding dives,
-- throws,
-- reaction poses.
+- Base: Unity Humanoid avatar, T-pose, 55 bones, 30k tris target `TDD.md:5` URP mobile-friendly.
+- Size: 1.80m height, proportions locked per `features/02/01_rig_retargeting_and_locomotion.md:16` for retarget `animation_clip_inventory.md:15` all players.
+- Choice: Hybrid `animation_requirements.md:10` - Rokoko mocap 30 clips (batting/bowling/keeper) + Mixamo 40 locomotion/fielding `system_design.md:443` Recommended.
+- Prop: Bat constraint (hand IK) `animation_and_scene_pipeline_roadmap.md:113` not manual offset.
 
 ### 3.2 Retargeting Rules
 
@@ -173,23 +167,15 @@ These motions make the game feel alive.
 
 ## 5. Unity Setup Tasks
 
-### 5.1 Animator Controllers
+### 5.1 Animator Controllers (locked per `animation_and_scene_pipeline_roadmap.md:126` layers + `TDD.md:87` tiers)
 
-- build controllers for batting, bowling, fielding, keeper, and reactions,
-- use clear parameter names,
-- keep locomotion separate from action layers,
-- keep state transitions understandable for AI maintenance.
+- 7 layers `animation_and_scene_pipeline_roadmap.md:128` BaseLocomotion/Batting/Bowling/Fielding/Keeper/Reaction/Additive. Locomotion separate from action `animation_and_scene_pipeline_roadmap.md:276` 0.15s blend `TDD.md:75`.
+- Low tier: Priority 1 only `animation_clip_inventory.md:345` (~40 clips), no keeper detail `TDD.md:87`.
 
-### 5.2 Blend Trees
+### 5.2 Blend Trees (locked params `animation_and_scene_pipeline_roadmap.md:139`)
 
-Blend trees should be driven by gameplay variables such as:
-
-- movement speed,
-- shot type,
-- timing quality,
-- release quality,
-- throw power,
-- dive trigger.
+Params: `isBatting/isBowling/isFielding/isWicketKeeper/movementSpeed[0..6 m/s]/shotType enum [defensive/drive/cut/pull/sweep/loft]/timingQuality [-1 early,0 good,1 late] per `delivery_physics_constants.json:20` 60/120ms/shotPower[0..1]/deliveryType/releaseQuality/diveTrigger/throwPower`.
+- Low tier single IK pass, High 2 passes `TDD.md:87`.
 
 ### 5.3 Timeline
 
@@ -201,16 +187,12 @@ Use Timeline for:
 - menu motion,
 - reward reveals.
 
-### 5.4 Animation Events
+### 5.4 Animation Events (locked: normalized window, server owns resolution)
 
-Align gameplay events with animation events where needed:
-
-- bat contact,
-- ball release,
-- catch frame,
-- stump break,
-- throw release,
-- celebration trigger.
+- Bat contact normalized `0.40 +/- 0.04` for 30-frame ref `TDD.md:93` `system_design/physics_tick_and_reconciliation.md:16` sub-stepping for fast swing; authored frame per clip recorded but server resolves via `DeliveryId` + tick `TDD.md:58` `PhysicalState.DeliveryId`.
+- Events are presentation only `TDD.md:41` `Animation replication: intent not transforms`. Replicated intent `shotType/timingQuality/shotPower/footworkContext/deliveryType` `TDD.md:41`.
+- Blend during `TransitioningToHuman` 0.15s `TDD.md:75` from `AnimationStateId`/`NormalizedTime` `TDD.md:58`.
+- Validator: `features/02_animation_pipeline.md:249` naming + `animation_clip_inventory.md:367` + `features/02/01_rig_retargeting_and_locomotion.md:16` foot-slide <5cm.
 
 ## 6. Expected Output
 

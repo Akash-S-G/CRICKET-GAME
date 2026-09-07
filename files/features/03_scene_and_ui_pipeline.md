@@ -123,55 +123,33 @@ Purpose:
 - team readying,
 - connection state.
 
-## 4. UI Architecture
+## 4. UI Architecture (locked: uGUI + Stack per `system_design/ui_architecture_and_navigation.md:8`)
 
-### 4.1 Mobile Readability
+### 4.1 Mobile Readability (tier budgets `system_design.md:188`)
 
-- Build for small screens first.
-- Use large enough tap targets.
-- Keep text simple and high contrast.
-- Avoid burying the player in nested menus.
+- Tap target >=44dp, text 14sp min, contrast 4.5:1. Low tier single-pass UI, atlas 1024 `system_design.md:188`.
 
 ### 4.2 Data-Driven UI
 
-- UI panels should read from data objects.
-- UI should not own match logic.
-- Mode cards, rewards, and settings should come from the data layer.
+- Panels bind to SO `ScriptableObjects/Modes/...` `unity_ai_workflow_and_project_structure.md:73` + `IContentService` `system_design/service_interfaces.md:42` + `IRemoteConfigService` `system_design/remote_config_and_analytics.md:8`. No hard-coded mode logic `feature_implementation_master.md:290`.
 
-### 4.3 UI Groups
+### 4.3 UI Groups + Navigation
 
-Recommended groups:
-
-- navigation UI,
-- match HUD,
-- results UI,
-- tutorial UI,
-- settings UI,
-- reward UI,
-- lobby UI,
-- debug UI.
+Stack model `system_design/ui_architecture_and_navigation.md:16`: `UIRoot` persistent `DontDestroyOnLoad` holds modal stack + toast + loading overlay. Layers `system_design/ui_architecture_and_navigation.md:34` full-screen/modal/HUD/transient. Back nav consistent, `Home` recoverable `system_design/ui_architecture_and_navigation.md:39`. Scene owns HUD `scene_by_scene_setup.md:137` `Match_Play` score overlay.
 
 ## 5. Presentation Systems
 
-### 5.1 Cinemachine
+### 5.1 Cinemachine 3.x (`TDD.md:8` pinned)
 
-Use Cinemachine for:
-
-- follow cameras,
-- broadcast framing,
-- camera transitions,
-- replay shots,
-- scene movement.
+Blends 0.3s `system_design/physics_tick_and_reconciliation.md:16` 30Hz sim vs render-rate Animator `TDD.md:93`, modes per `scene_by_scene_setup.md:316` `Match_Play` 5 cameras + `Replay` `game_flow_and_camera_design.md:272` FOV 60/70.
 
 ### 5.2 Timeline
 
-Use Timeline for:
+Intro/wicket/replay packages `animation_and_scene_pipeline_roadmap.md:279` drive `Results` `scene_by_scene_setup.md:360` presentation camera `features/03/01_boot_login_and_home_flow.md:28`.
 
-- intro shots,
-- wicket sequences,
-- replay motion,
-- result presentation,
-- menu ambience.
+### 5.3 Additive Loading
+
+`Boot` (always) + `Home_Menu` additive `scene_by_scene_setup.md:212`, `Match_Play` heavy; heavy `Stadiums` via Addressables `system_design/addressables_grouping.md:16`. Validate `UIRoot` survives `system_design/ui_architecture_and_navigation.md:43`.
 
 ### 5.3 Animated Backgrounds
 

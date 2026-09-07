@@ -33,35 +33,17 @@ If this is wrong:
 
 ## 3. Simulation Design
 
-### 3.1 Ball Physics
+### 3.1 Ball Physics (30Hz fixed + sub-step, server authoritative `TDD.md:33` `system_design/physics_tick_and_reconciliation.md:8`)
 
-The ball model must support:
+- State `BallState { pos, vel, angVel, seamAngle, DeliveryId }` tick `30Hz` min `TDD.md:36` 60Hz if perf, sub-step on fast `system_design/physics_tick_and_reconciliation.md:16` bat-ball contact.
+- Forces: drag `delivery_physics_constants.json:7` `drag 0.47`, swing `0.35m` `delivery_physics_constants.json:12`, pitch COR `0.65` `delivery_physics_constants.json:24` * `pitch_schema.json:4` modifier.
+- Deterministic `system_design/physics_tick_and_reconciliation.md:24` same tick order, seed explicit, snapshot `TDD.md:58` `PhysicalState.ServerTick`.
 
-- flight,
-- swing,
-- seam,
-- bounce,
-- spin,
-- drag,
-- contact response,
-- pitch reaction.
+### 3.2 Batting (timing 60/120ms `delivery_physics_constants.json:20` -> blend `timingQuality`)
 
-This should be deterministic enough to test and tune.
-
-### 3.2 Batting
-
-Batting must support:
-
-- late shot intent,
-- timing windows,
-- shot direction,
-- shot type,
-- power,
-- mistakes and mishits,
-- run creation,
-- defensive play.
-
-Batting should feel like a decision under pressure, not a button press.
+- Intent late: `ShotIntent` enum `features/04/02_batting_outcome_and_shot_model.md:16` defensive/drive/cut/pull/sweep/loft + `ShotDirection` 360 deg `GDD.md:165` maps to `animation_and_scene_pipeline_roadmap.md:139` `shotType/timingQuality/shotPower`.
+- Timing `good 60ms` `early/late 120ms` `delivery_physics_constants.json:20` good->sweet `COR 0.85` edge `0.55` `delivery_physics_constants.json:17` + variance `25deg` `delivery_physics_constants.json:22`.
+- Mishits via `TDD.md:41` replicated intent `timingQuality` [-1/0/1] -> `animation_clip_inventory.md:114` `bat_loft_early/good/late`.
 
 ### 3.3 Bowling
 
@@ -76,22 +58,11 @@ Bowling must support:
 
 Bowling should feel controlled and tactical.
 
-### 3.4 Fielding
+### 3.4 Fielding (explicit RPC handoff `TDD.md:40` `controller_handoff_spec.md:41`)
 
-Fielding must support:
-
-- AI field setup,
-- human control handoff,
-- pickup,
-- stop,
-- throw,
-- catch,
-- dive,
-- boundary save,
-- relay,
-- run-out pressure.
-
-Fielding should remain readable and responsive.
+- Handoff via `HandoffRequestRPC`/`HandoffConfirmedRPC` `controller_handoff_spec.md:42` with `PhysicalState` `TDD.md:58` `AnimationStateId/NormalizedTime/DeliveryId` + `handoff_radius_m` `mode_config_schema.json:18` 3.5 Main /5.0 Gully, priority intercept time `controller_handoff_spec.md:35` + `GDD.md:222`.
+- Blend 0.15s `TDD.md:75` during `TransitioningToHuman` `TDD.md:50` `IPlayerController.State`, server already authoritative `system_design/state_machines_and_event_model.md:33` `OnHandoffTriggered/Confirmed`.
+- Low tier reactive only `TDD.md:81` no dives.
 
 ## 4. Match Rules
 
@@ -142,11 +113,10 @@ If human players are missing:
 
 ## 5. Implementation Tasks
 
-### 5.1 Domain Model
+### 5.1 Domain Model (pure per `features/04/04_rules_engine_and_match_state.md:16` + `system_design/state_machines_and_event_model.md:33`)
 
-- build a pure-ish domain layer for rules and match state,
-- keep gameplay outcomes testable,
-- separate match resolution from presentation events.
+- Pure `RulesEngine` consuming `BallState` + `ShotIntent` -> `OnWicketFallen`/`OnOverComplete` `system_design/state_machines_and_event_model.md:33`, Animator not owner `TDD.md:41` presentation cue only `TDD.md:93` contact window `0.40+/-0.04` `TDD.md:93`.
+- State `NotStarted->TossPhase->Innings1->Complete` `system_design/state_machines_and_event_model.md:28` + `Delivery` `Bowling->Resolved` `system_design/state_machines_and_event_model.md:34`.
 
 ### 5.2 Timing and Outcome
 

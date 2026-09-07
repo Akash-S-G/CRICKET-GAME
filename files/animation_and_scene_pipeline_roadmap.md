@@ -80,11 +80,12 @@ Environment motion should include:
 - `Codex CLI` for batch maintenance, validation, and repo operations.
 - `Context7 MCP` for up-to-date docs when working with newer APIs or packages.
 
-### 3.3 External Animation Resources
+### 3.3 External Animation Resources (free/AI, no subs)
 
-- `Rokoko` for motion capture and AI-assisted mocap workflows.
-- `Mixamo` for fast auto-rigging and base animation clips.
-- `Adobe Firefly` for concept visuals, quick motion concepts, and asset ideation.
+- `Mixamo` (free Adobe account) for base locomotion/support - CC-like free for Unity, not for signature.
+- `Cascadeur Community` (free) + `Blender` (free) for physics-correct signature batting/bowling cleanup.
+- `Plask` / `Move AI` free tier / `DeepMotion` free (2-3 clips/mo) for phone video -> FBX AI generation.
+- `Stable Diffusion` / `Blender` previz for Timeline scene blocks before Timeline polish.
 
 ## 4. Production Animation Strategy
 
@@ -111,17 +112,15 @@ All player characters use Unity Humanoid, a neutral T-pose, a `1.8 m` reference 
 - Props like bats and ball-handling should be controlled through constraints, not manual offsets.
 - Use an upper-body avatar mask for batting, bowling, and throwing layers so locomotion remains stable underneath action motion.
 
-### 5.3 Animation Rigging Use Cases
+### 5.3 Animation Rigging Use Cases (locked 1.3.0, presets in `features/02/05_animator_timeline_and_events.md:1`)
 
-Use `Animation Rigging` for:
-
-- bat alignment to ball contact using a Multi-Parent or Two-Bone IK setup,
-- bowling arm correction using Two-Bone IK with an elbow hint,
-- head and eye targeting using Multi-Aim constraints,
-- foot planting using Two-Bone IK with ground probes,
-- wicketkeeper crouch adaptation using Two-Bone IK,
-- fielding aim and throw direction using Multi-Aim plus hand IK,
-- procedural cleanup of retargeted motion without changing authoritative gameplay state.
+RigBuilder presets (1.3.0):
+- `Rig_Bat_TwoBoneIK`: chain `UpperArm_L -> Hand_L`, hint `elbow_hint_L 0.3`, target `socket_bat_handle` -> ball contact offset, weight 0.8 during `BatContact 0.36-0.44` `animation_requirements.md:60`.
+- `Rig_Bowling_TwoBoneIK`: chain `UpperArm_R -> Hand_R`, hint `elbow_hint_R`, weight 0.6 at `BallRelease 0.33`.
+- `Rig_Head_MultiAim`: source `Head`, target `ball`, weight 0.5 `field_idle_*` `animation_clip_inventory.md:56`.
+- `Rig_Feet_TwoBoneIK`: `UpperLeg->Foot` + ground ray probe, clamp `footSlide <5cm` `features/02/01_rig_retargeting_and_locomotion.md:16`.
+- `Rig_FieldThrow_MultiAim`: hand + aim to `stump`/`relay_target`.
+All rigs additive, never override `PhysicalState.DeliveryId` `TDD.md:58` server authoritative `TDD.md:96`.
 
 ## 6. Animation State Architecture
 
@@ -470,14 +469,11 @@ The animation and scene pipeline is good enough when:
 - [Codex CLI docs](https://learn.chatgpt.com/docs/codex/cli)
 - [MCP standard](https://modelcontextprotocol.io/docs/2026-07-28/getting-started/intro)
 
-## 14. Practical Recommendation
+## 14. Practical Recommendation (free pipeline)
 
-For this game, the best production path is:
-
-1. Build player rigs and locomotion first.
-2. Use Mixamo or marketplace clips only as support, not as the final cricket signature.
-3. Use Rokoko or similar mocap for batting, bowling, and keeper-quality motion if budget allows.
-4. Use Animation Rigging to make the motion fit the cricket context.
-5. Use Cinemachine and Timeline to make scenes feel alive.
-6. Use AI tools to accelerate setup, state wiring, and iteration.
-7. Treat the final feel of batting and bowling as the highest animation priority.
+1. Build `1.8m` Humanoid rig + `socket_bat_handle` first `features/02/00_rig_source_and_naming.md:16`.
+2. Import Mixamo support clips first for locomotion baseline.
+3. Self-record phone video (front/side) -> Plask/MoveAI free -> FBX -> Cascadeur/Blender cleanup for 30 signature batting/bowling/keeper clips `animation_requirements.md:10`.
+4. Animation Rigging 1.3.0 Multi-Parent/TwoBoneIK for bat alignment `animation_and_scene_pipeline_roadmap.md:114`.
+5. Cinemachine 3.0.1 + Timeline previz via Blender/ SD before polish.
+6. Validate `Editor/ValidateClipNames.cs` after every import `features/02/00_rig_source_and_naming.md:44`.

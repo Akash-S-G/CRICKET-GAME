@@ -193,16 +193,22 @@ footworkContext: enum { FrontFoot, BackFoot, Neutral }
 - `shotType`, `timingQuality`, `shotPower`, and `footworkContext` must be recorded in the delivery intent so animation, physics, replay, and networking consume the same decision.
 - The animation mapping is defined in `animation_and_scene_pipeline_roadmap.md`; no feature may invent a second timing enum.
 
-### Bowling
-- Run-up: automatic or player-paced approach
-- Delivery type select: pace variation, seam angle, spin type/variation - chosen before or during run-up depending on mode's complexity tier
-- Release timing: button press at run-up's release point determines line/length accuracy; mistimed release = execution error (ball drifts from intended target)
-- Bowler identity must matter:
-  - pace bowlers should feel distinct from spinners,
-  - swing and seam should create meaningful line movement,
-  - variations should be readable but not overexposed,
-  - fatigue should affect control over longer spells.
-- Bowling feedback should teach the player what went wrong rather than simply stating "missed."
+### Bowling (delivery enum linked to `TDD.md:41` `deliveryType` + `player_schema.json:17` + `animation_clip_inventory.md:153`)
+
+| `deliveryType` | Clip `animation_clip_inventory.md:153` | Physics `player_schema.json:17` pace/spin | Animation `animation_events_sidecar.json:1` `BallRelease` |
+|---|---|---|---|
+| `pace_standard` | `bowl_pace_standard` `BallRelease 0.33` | `pace_kph 135-145` `swing 0.3-0.4` | Plask->Cascadeur->Blender Custom |
+| `pace_yorker` | `bowl_pace_yorker` `0.33` | yorker length, same pace | Custom |
+| `pace_bouncer` | `bowl_pace_bouncer` `0.33` | short length | Custom |
+| `slower_ball` | `bowl_pace_slower_ball` `0.33` | `pace_kph -15` | Custom |
+| `off_spin` | `bowl_offspin_standard` `0.32` | `spin_type off` `spin 0.6` | Custom |
+| `leg_spin` | `bowl_legspin_standard` `0.32` | `spin_type leg` | Custom |
+| `googly/flipper` | `bowl_legspin_googley` `0.32` | variation flag | Custom |
+
+- Run-up automatic or player-paced; `spin` short, `pace` long `animation_clip_inventory.md:153` `bowl_runup_*`.
+- Release timing window same `60/120ms` `delivery_physics_constants.json:20` maps to `releaseQuality [-1,1]` `animation_and_scene_pipeline_roadmap.md:160` `TDD.md:41`, wobble visual but physics authoritative `TDD.md:96`.
+- Bowler identity: distinct `swing/seam` per `player_schema.json:17` `swing_amount/seam_amount`; fatigue reduces accuracy `GDD.md:3` control.
+- Feedback: `Good release` / `Early` / `Late` with line drift, not vague "missed."
 
 ### Fielding
 - **Active fielder** (ball within the mode's `handoff_radius_m`): direct movement + dive/slide + throw aim + throw power, human-controlled

@@ -41,12 +41,11 @@ Implement:
 - `Top-Down Tactical Camera`
 - `Replay Camera`
 
-### 3.2 Camera Behavior
+### 3.2 Camera Behavior (locked: Cinemachine 3.x `TDD.md:8`, blend 0.3s `system_design/physics_tick_and_reconciliation.md:16`)
 
-- each mode should have sensible defaults,
-- camera switching should be fast,
-- mobile controls should not be blocked by camera changes,
-- the camera should support clarity before spectacle when needed.
+- Defaults per `scene_by_scene_setup.md:316` `Nets` FPP/Batting Broadcast/Bowling End/TopDown, `Match_Play` 5 modes `game_flow_and_camera_design.md:272` FOV 60 batting /70 top-down; per-mode lock in `CameraConfig` SO `ScriptableObjects/Cameras/` `unity_ai_workflow_and_project_structure.md:73`.
+- Switch <0.3s, never block `system_design/input_action_maps.md:31` Input Routing 2 (gameplay) vs 3 (camera).
+- URP tier: Low 30fps no post `system_design.md:188`.
 
 ### 3.3 Camera Tasks
 
@@ -59,17 +58,11 @@ Implement:
 
 ## 4. Input System
 
-### 4.1 Touch Controls
+### 4.1 Touch Controls (Action Maps `system_design/input_action_maps.md:16` + thresholds `system_design/input_action_maps.md:31`)
 
-Touch controls must support:
-
-- batting direction,
-- batting timing,
-- power input,
-- bowling release,
-- fielding movement,
-- dive/throw triggers,
-- camera and UI interactions.
+- Maps: Batting `AimDirection`/`ShotIntent`/`ShotPower`/`TapTiming`, Bowling `LineAim`/`LengthAim`/`ReleaseTiming`, Fielding `Move`/`Sprint`/`Dive`/`Throw` `system_design/input_action_maps.md:16`.
+- Gestures `system_design/input_action_maps.md:25` tap/hold/swipe 40px min /120px intent /150ms hold /500ms long press; swipe maps to `GDD.md:165` shot direction 360 deg + power duration `GDD.md:176`.
+- Package Input System 1.11.x `TDD.md:5` UI nav via `Navigate`/`Submit` `system_design/input_action_maps.md:16` persistent `UIRoot` `system_design/ui_architecture_and_navigation.md:16`.
 
 ### 4.2 Controller Mapping
 
@@ -82,29 +75,18 @@ Controller support should map to the same gameplay concepts:
 - fielding control,
 - menu navigation.
 
-### 4.3 Input Configuration
+### 4.3 Input Configuration (persisted via `ISaveService` `system_design/service_interfaces.md:16`)
 
-The player should be able to adjust:
-
-- sensitivity,
-- camera preference,
-- assist level,
-- touch feel,
-- controller mapping where needed.
+- Sensitivity 0.5-2.0, `handoff_radius_m` override `system_design/remote_config_and_analytics.md:8` 3.5 fallback, camera lock per mode `ScriptableObjects/Cameras/` `unity_ai_workflow_and_project_structure.md:73`.
+- Controller maps same actions `system_design/input_action_maps.md:40` reads actions not device.
+- Saved in `profiles/<profileId>/profile.json` `system_design/save_schema_versioning.md:16` + cloud sync field-merge `system_design/save_schema_versioning.md:46`.
 
 ## 5. Tutorial Design
 
-### 5.1 Tutorial Order
+### 5.1 Tutorial Order (`player_onboarding_and_tutorial_flow.md:59` + `system_design/state_machines_and_event_model.md:33`)
 
-Teach in the order a player needs to understand the game:
-
-1. basic movement and camera
-2. batting
-3. bowling
-4. fielding
-5. match setup
-6. progression
-7. practice use
+- Flow `Boot->Home->Tutorial` `system_design/state_machines_and_event_model.md:16` `OnTutorialCompleted` gates `profile.json` tutorialCompleted `system_design/save_schema_versioning.md:33`.
+- Steps `player_onboarding_and_tutorial_flow.md:59` defend->single->gap->aggressive->mistime; prompt via `IAnalyticsService.TrackEvent("tutorial_completed")` `system_design/remote_config_and_analytics.md:34`.
 
 ### 5.2 Tutorial Tasks
 

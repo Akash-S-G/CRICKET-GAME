@@ -34,22 +34,19 @@ Detailed contracts:
 - [Networking go/no-go and budget](07/00_networking_go_no_go_and_budget.md)
 - [Authority matrix and replication table](07/04_authority_matrix_and_replication_table.md)
 
-### 3.1 Authority Model
+### 3.1 Authority Model (server-wins `TDD.md:33` + `system_design/physics_tick_and_reconciliation.md:16`)
 
-Use the server as the source of truth for:
+Server (NGO host/dedicated `TDD.md:9`) owns ball, dismissals, scoring, progress, ownership, result `features/07/01_authority_and_replication_model.md:16` + `PhysicalState.DeliveryId/ServerTick` `TDD.md:58`. Version NGO 2.4.x `TDD.md:9`, Fusion fallback only at Main Mode `TECH_STACK.md:15`.
 
-- ball state,
-- dismissals,
-- scoring,
-- match progress,
-- fielding ownership,
-- final outcomes.
+Clients predict local movement/control, reconcile via snapshots `system_design/physics_tick_and_reconciliation.md:24` blending non-critical, snap for rule-critical `system_design/physics_tick_and_reconciliation.md:24`. Anim intent replicates `shotType/timingQuality` `TDD.md:41` not transforms `TDD.md:41`.
 
-Clients may predict:
-
-- local movement,
-- immediate control response,
-- presentation.
+| System | Authoritative | Replicates | Rate |
+|---|---|---|---|
+| Ball | Server | pos/vel/DeliveryId | 30Hz fixed `TDD.md:36` sub-step |
+| Shot | Server contact | `shotType/timingQuality/shotPower` | event |
+| Fielding handoff | Server | `HandoffRequestRPC` with `PhysicalState` `TDD.md:58` | immediate |
+| Match state | Server | `NotStarted->Complete` `system_design/state_machines_and_event_model.md:28` | event |
+| Animation | Client owns evaluation | `AnimationStateId/NormalizedTime` | render-rate `TDD.md:93` |
 
 ### 3.2 AI Backfill
 
@@ -60,14 +57,11 @@ The system must support missing players by:
 - avoiding stalled lobbies,
 - keeping the game playable even when the lobby is incomplete.
 
-### 3.3 Control Handoff
+### 3.3 Control Handoff (explicit RPC `TDD.md:40` + `controller_handoff_spec.md:41` + `features/07/03_disconnect_reconnect_and_backfill.md:16`)
 
-The fielding handoff system must:
-
-- transfer ownership cleanly,
-- preserve physical continuity,
-- handle latency,
-- support disconnect/reconnect.
+- Trigger `handoff_radius_m` `mode_config_schema.json:18` 3.5/5.0 intercept-time priority `controller_handoff_spec.md:35` + `GDD.md:222`.
+- Confirm `HandoffRequestRPC`->`HandoffConfirmedRPC` `controller_handoff_spec.md:42`, blend 0.15s `TDD.md:75` during `TransitioningToHuman` `TDD.md:50`, server `Transitioning` authoritative `system_design/state_machines_and_event_model.md:33`.
+- Interest mgmt `TDD.md:39` cull distant fielders; bandwidth biggest risk `risks.md:14` revisit at Main Mode milestone `system_design/build_pipeline.md:16` CI ded-server build `features/08_testing_ci_and_release.md:16`.
 
 ## 4. Session and Lobby Flow
 
@@ -147,14 +141,12 @@ An AI agent working on this feature should:
 - build AI backfill behavior,
 - build multiplayer debug readouts.
 
-## 10. Expected Tests
+## 10. Expected Tests (latency + authority per `system_design/physics_tick_and_reconciliation.md:24`)
 
-- multiplayer join/start tests,
-- handoff latency tests,
-- disconnect/reconnect tests,
-- state sync tests,
-- AI backfill tests,
-- session cleanup tests.
+- Handoff latency artificially injected 100-150ms `risks.md:15`, verify blend not snap.
+- Deterministic ball `features/04/01_ball_physics_and_contact_model.md:21` same inputs same output `system_design/physics_tick_and_reconciliation.md:24`.
+- Auth: spoofed `OnWicketFallen` rejected `system_design/security_threat_model.md:33` server owns.
+- AI backfill `features/07/03_disconnect_reconnect_and_backfill.md:16` missing slot -> `AIController` `TDD.md:41` without stall `mode_config_schema.json:18` `min_players_to_start`.
 
 ## 11. Exit Criteria
 
