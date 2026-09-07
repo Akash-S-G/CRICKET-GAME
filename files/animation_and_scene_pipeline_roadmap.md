@@ -67,8 +67,8 @@ Environment motion should include:
 ### 3.1 Core Unity Tools
 
 - `Animator Controller` for animation state machines.
-- `Animation Rigging` for IK, aiming, and procedural adjustments.
-- `Cinemachine` for dynamic and mode-based camera behavior.
+- `Animation Rigging 1.2.x` for IK, aiming, and procedural adjustments.
+- `Cinemachine 3.0.x` for dynamic and mode-based camera behavior.
 - `Timeline` for match intros, replays, wickets, and menu presentation.
 - `Addressables` for loading animation-heavy or cinematic content on demand.
 
@@ -102,25 +102,26 @@ This avoids the common trap of having generic animation everywhere.
 
 ### 5.1 Rig Standard
 
-All player characters should share a common humanoid-compatible rig standard so animations can be retargeted across players.
+All player characters use Unity Humanoid, a neutral T-pose, a `1.8 m` reference height, and the same Unity Human Bone mapping. The required skeleton and prop sockets are locked in `animation_requirements.md` and `features/02/00_rig_source_and_naming.md`.
 
 ### 5.2 Rigging Rules
 
 - The rig must support batting, bowling, fielding, running, and wicketkeeper poses.
 - Hands, shoulders, spine, hips, knees, ankles, and head must be stable in retargeting.
 - Props like bats and ball-handling should be controlled through constraints, not manual offsets.
+- Use an upper-body avatar mask for batting, bowling, and throwing layers so locomotion remains stable underneath action motion.
 
 ### 5.3 Animation Rigging Use Cases
 
 Use `Animation Rigging` for:
 
-- bat alignment to ball contact,
-- bowling arm correction,
-- head and eye targeting,
-- foot planting,
-- wicketkeeper crouch adaptation,
-- fielding aim and throw direction,
-- procedural cleanup of retargeted motion.
+- bat alignment to ball contact using a Multi-Parent or Two-Bone IK setup,
+- bowling arm correction using Two-Bone IK with an elbow hint,
+- head and eye targeting using Multi-Aim constraints,
+- foot planting using Two-Bone IK with ground probes,
+- wicketkeeper crouch adaptation using Two-Bone IK,
+- fielding aim and throw direction using Multi-Aim plus hand IK,
+- procedural cleanup of retargeted motion without changing authoritative gameplay state.
 
 ## 6. Animation State Architecture
 
@@ -148,12 +149,27 @@ Recommended parameters:
 - `shotType`
 - `timingQuality`
 - `shotPower`
+- `footworkContext`
 - `deliveryType`
 - `releaseQuality`
 - `diveTrigger`
 - `throwPower`
 - `isCelebrating`
 - `isReacting`
+
+Parameter contract:
+
+| Parameter | Type/range | Source |
+|---|---|---|
+| `shotType` | enum | resolved delivery intent |
+| `shotDirectionDeg` | float `[-180, 180]` | stick/swipe intent |
+| `timingQuality` | float `[-1, 1]` | physics timing window |
+| `shotPower` | float `[0, 1]` | normalized hold/swipe |
+| `footworkContext` | enum | stick or delivery-length automation |
+| `deliveryType` | enum | bowling intent |
+| `releaseQuality` | float `[-1, 1]` | bowling release timing |
+
+The `60 ms` good and `120 ms` early/late timing windows come from `delivery_physics_constants.json`. Animation does not maintain a second timing table.
 
 ### 6.3 State Machine Rules
 
@@ -185,6 +201,8 @@ Each shot should have timing variants:
 - early
 - good
 - late
+
+Each gameplay clip also records `shotPower` on the `[0, 1]` blend axis and a normalized `BatContact` event. The event must fall between `0.36` and `0.44`; physics remains authoritative for the actual contact result.
 
 ### 7.2 Bowling Matrix
 
@@ -296,6 +314,20 @@ Use `Cinemachine` for:
 - cut-ins,
 - replay shots,
 - match intro shots.
+
+Camera contract:
+
+| Mode | FOV | Blend/cut |
+|---|---:|---:|
+| FPP / Batter View | 62 degrees | 0.20 s |
+| Batting Broadcast | 48 degrees | 0.30 s |
+| Bowling End | 52 degrees | 0.25 s |
+| Mid-Wicket Tactical | 58 degrees | 0.30 s |
+| Chase | 65 degrees | 0.20 s |
+| Top-Down Tactical | 50 degrees | 0.35 s |
+| Replay | 45-60 degrees | Timeline-controlled |
+
+Camera values are presentation settings. Camera blends must not delay or modify the input timing window.
 
 Use `Timeline` for:
 

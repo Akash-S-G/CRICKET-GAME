@@ -7,7 +7,19 @@ Options, roughly in order of fidelity vs cost:
 2. **Marketplace/Mixamo-sourced + retargeted** — fast, cheap, generic; fine for fielding/running, likely too generic-looking for the signature batting/bowling actions that need to feel "cricket-specific."
 3. **Procedural/IK-driven** — most flexible for blending (e.g., continuously variable bowling arm angle for different deliveries) but requires more animation-engineering time upfront.
 
-**Recommendation:** hybrid — mocap or high-quality marketplace set for core batting shots and bowling actions (these define the game's feel), procedural IK layered on top for variation (arm angle, follow-through variance) and for fielding actions where full mocap coverage of every variation isn't practical.
+**Locked decision:** hybrid. Use Rokoko or equivalent captured/bespoke motion for the 30 signature batting and bowling clips, Mixamo or licensed marketplace motion for approximately 40 locomotion/support clips, and Animation Rigging for procedural variation and correction. The source and license for every imported clip must be recorded before import; Mixamo is not permitted for signature batting or bowling clips.
+
+### Production Budget
+
+- One shared Unity Humanoid avatar at `1.8 m` reference height.
+- Maximum player render mesh: `30,000` triangles for Mid/High, `18,000` for Low.
+- Maximum runtime animation memory: `96 MB` on Low, `160 MB` on Mid, `240 MB` on High for player clips and controllers combined.
+- Use 30 fps authored clips for gameplay actions unless a reference requires 60 fps; compress clips with Unity keyframe reduction after contact/release validation.
+- Priority 1 clips must run on Low. Priority 2 clips may fall back to Priority 1 or a generic reaction. Priority 3 clips are optional on Low and may be Addressables content.
+
+## 1.1 Locked Rig Standard
+
+Use Unity Humanoid with a neutral T-pose, a `1.8 m` reference height, and stable Unity Human Bone mapping. Required bones are hips, spine/chest/upper chest, neck/head, clavicles, upper/lower arms, hands, upper/lower legs, feet, toes, and named bat-hand sockets. Bat and ball props attach through sockets, never through clip-specific world offsets.
 
 ## 2. Required Action Inventory
 
@@ -40,6 +52,22 @@ Define these early since they drive both animation setup and gameplay input mapp
 - **Batting:** shot-direction (2D blend, stick input), timing-quality (early/good/late as a blend axis), power (hold-duration mapped to swing intensity)
 - **Bowling:** delivery-type (discrete selection, not blended), release-timing-accuracy (affects a subtle "execution quality" blend — a slightly early/late release should visibly show effort/wobble even if mechanically resolved via physics, not animation, for the actual ball outcome)
 - **Fielding:** movement-speed blend (idle/jog/sprint), dive-trigger (discrete), throw-power (blend axis)
+
+The animation system consumes the same timing windows as physics: `60 ms` good and `120 ms` early/late boundary from `delivery_physics_constants.json`. Do not create separate animation timing constants.
+
+## 3.1 Authoritative Event Timing
+
+Gameplay clips must document normalized event times in a sidecar table:
+
+| Event | Required normalized range | Authority |
+|---|---:|---|
+| `BatContact` | `0.36-0.44` | Server resolves outcome; client event is visual |
+| `BallRelease` | `0.28-0.38` | Server spawns/validates delivery |
+| `CatchPoint` | `0.45-0.65` | Server validates catch |
+| `ThrowRelease` | `0.35-0.55` | Server validates throw |
+| `StumpBreak` | `0.45-0.60` | Server resolves dismissal |
+
+The exact frame is recorded per clip, but the gameplay event carries `deliveryId` and cannot be duplicated by a local animation callback.
 
 ## 4. Priority Order for Production
 

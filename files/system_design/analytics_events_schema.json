@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Cricket Game Analytics Events",
+  "type": "object",
+  "properties": {
+    "event_name": { "type": "string" },
+    "timestamp_utc": { "type": "string", "format": "date-time" },
+    "session_id": { "type": "string" },
+    "profile_id": { "type": "string" },
+    "build_hash": { "type": "string" },
+    "payload": { "type": "object" }
+  },
+  "required": ["event_name", "timestamp_utc", "payload"],
+  "additionalProperties": false
+}

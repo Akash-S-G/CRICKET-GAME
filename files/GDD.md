@@ -175,6 +175,24 @@ Design goals for batting:
 - Timing = release point of the swipe relative to ball arrival
 - No separate footwork input on mobile - footwork is context-automated (batter auto-adjusts front/back foot based on delivery length) to keep touch controls learnable in seconds, matching what works in successful mobile cricket titles
 
+#### Batting Input-to-Animation Contract
+
+All platforms resolve the same gameplay intent fields before selecting an animation:
+
+```text
+shotType: enum { Defense, StraightDrive, CoverDrive, OnDrive, Cut, Pull, Hook, Sweep, Loft }
+shotDirectionDeg: float [-180, 180]
+timingQuality: float [-1, 1]       // -1 early, 0 good, +1 late
+shotPower: float [0, 1]
+footworkContext: enum { FrontFoot, BackFoot, Neutral }
+```
+
+- `timingQuality` is calculated against `delivery_physics_constants.json`: good is within `60 ms`, early/late remains usable within `120 ms`.
+- `shotPower` is the normalized hold/swipe input after clamping; it drives the animation power axis and the physics input, not a separate visual-only effect.
+- PC/console footwork comes from the left stick. Mobile footwork is selected from delivery length: front foot for full/overpitched, back foot for short, neutral for good length until the shot commits.
+- `shotType`, `timingQuality`, `shotPower`, and `footworkContext` must be recorded in the delivery intent so animation, physics, replay, and networking consume the same decision.
+- The animation mapping is defined in `animation_and_scene_pipeline_roadmap.md`; no feature may invent a second timing enum.
+
 ### Bowling
 - Run-up: automatic or player-paced approach
 - Delivery type select: pace variation, seam angle, spin type/variation - chosen before or during run-up depending on mode's complexity tier
@@ -187,8 +205,9 @@ Design goals for batting:
 - Bowling feedback should teach the player what went wrong rather than simply stating "missed."
 
 ### Fielding
-- **Active fielder** (ball within handoff radius): direct movement + dive/slide + throw aim + throw power, human-controlled
-- **Inactive fielders:** AI-controlled positioning until handoff radius triggers control transfer (full mechanics of this in `controller_handoff_spec.md`)
+- **Active fielder** (ball within the mode's `handoff_radius_m`): direct movement + dive/slide + throw aim + throw power, human-controlled
+- **Inactive fielders:** AI-controlled positioning until the server predicts an intercept inside the configured handoff radius (full mechanics of this in `controller_handoff_spec.md`)
+- Main Mode starts at `3.5 m`, Gully at `5.0 m`, and MinBoundary at `4.0 m`; values come from `mode_config_schema.json`.
 - **Pre-ball field setting:** human captain/player sets fielder positions via drag-and-drop UI before each over or each ball (mode-dependent)
 - Fielding should support:
   - close-in pressure catching,

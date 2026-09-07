@@ -13,6 +13,8 @@ Design a mobile-first cricket game that is:
 
 The key system choice is to keep the game architecture modular, data-driven, and server-authoritative where competition matters.
 
+Concrete implementation specs live in [system_design/INDEX.md](system_design/INDEX.md). Use those subdocs for exact service contracts, storage rules, input maps, addressables, and build tooling.
+
 ## 2. Design Principles
 
 1. Separate simulation from presentation.
@@ -438,7 +440,7 @@ Recovery behavior:
 
 - Engine: Unity 6 LTS
 - Rendering: URP
-- Runtime UI: Unity UI / retained-mode game UI for production readability
+- Runtime UI: uGUI for runtime game UI
 - Editor tooling: UI Toolkit where useful
 - Networking: NGO first, dedicated server path for competition, Photon Fusion only if needed later
 - Content: Addressables + remote delivery
@@ -448,14 +450,16 @@ Recovery behavior:
 
 ## 17. Implementation Order
 
-1. Build the domain model and match state machines.
-2. Build the single-player simulation and Nets mode.
-3. Add data-driven configs and Addressables.
+Follow [implementation_master_plan.md](implementation_master_plan.md) for phase order. Do not use this section to override the execution plan.
+
+The architecture rule is:
+
+1. Lock the domain and service contracts first.
+2. Build the single-player simulation and Nets mode next.
+3. Add data-driven configs, Addressables, and persistence.
 4. Build mobile UI and onboarding.
-5. Add local save, profile, and cloud sync.
-6. Add small-scale multiplayer.
-7. Add dedicated server support and scale to Main Mode.
-8. Add live-ops, events, analytics, and retention systems.
+5. Add small-scale multiplayer.
+6. Scale to dedicated-server support and live operations.
 
 ## 18. Final Rule
 
